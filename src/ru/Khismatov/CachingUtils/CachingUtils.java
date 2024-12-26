@@ -19,18 +19,13 @@ public class CachingUtils {
             Object obj = objects[i];
             if (obj == null) {throw new IllegalArgumentException("Object at index " + i + " cannot be null");}
             Class<?> objClass = obj.getClass();
-            // Проверяем, аннотирован ли объект @Cache
             Cache cacheAnnotation = objClass.getAnnotation(Cache.class);
             if (cacheAnnotation != null) {
-                // Если аннотация присутствует, создаём прокси с учётом параметров аннотации
                 String[] cacheableMethods = cacheAnnotation.value();
                 proxiedObjects[i] = createProxy(obj, objClass.getInterfaces(), cacheableMethods);
-            } else {
-                // Если аннотации нет, возвращаем оригинальный объект
-                proxiedObjects[i] = obj;
             }
+            else proxiedObjects[i] = obj;
         }
-
         return proxiedObjects;
     }
 
@@ -63,22 +58,15 @@ public class CachingUtils {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             // Не кэшируем методы с параметрами
-            if (args != null && args.length > 0) {
-                return method.invoke(target, args);
-            }
-
+            if (args != null && args.length > 0) {return method.invoke(target, args);}
             // Проверяем, является ли метод кэшируемым
             if (!isCacheableMethod(method)) {return method.invoke(target);}
-
             // Если метод уже есть в кэше, проверяем состояние объекта
             if (cache.containsKey(method)) {
                 Object currentState = getState(target);
                 Object lastKnownState = lastState.get(method);
-                if (Objects.equals(currentState, lastKnownState)) {
-                    return cache.get(method); // Возвращаем кэшированное значение
-                }
+                if (Objects.equals(currentState, lastKnownState)) {return cache.get(method);}
             }
-
             // Вызываем метод, кэшируем результат и обновляем состояние
             Object result = method.invoke(target);
             cache.put(method, result);
@@ -88,10 +76,7 @@ public class CachingUtils {
 
         private boolean isCacheableMethod(Method method) {
             // Если список кэшируемых методов не задан, кэшируем все методы без параметров
-            if (cacheableMethodNames == null) {
-                return method.getParameterCount() == 0;
-            }
-
+            if (cacheableMethodNames == null) {return method.getParameterCount() == 0;}
             // Кэшируем только методы, перечисленные в аннотации
             return cacheableMethodNames.contains(method.getName()) && method.getParameterCount() == 0;
         }
