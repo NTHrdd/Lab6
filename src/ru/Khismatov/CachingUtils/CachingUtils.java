@@ -11,9 +11,7 @@ import java.util.*;
 public class CachingUtils {
 
     public static Object[] cache(Object... objects) {
-        if (objects == null || objects.length == 0) {
-            throw new IllegalArgumentException("Objects cannot be null or empty");
-        }
+        if (objects == null || objects.length == 0) throw new IllegalArgumentException("Objects cannot be null or empty");
         Object[] proxiedObjects = new Object[objects.length];
         for (int i = 0; i < objects.length; i++) {
             Object obj = objects[i];
@@ -48,11 +46,8 @@ public class CachingUtils {
             this.target = target;
 
             // Если список методов пустой (аннотация без параметров), кэшируем все методы
-            if (cacheableMethods == null || cacheableMethods.length == 0) {
-                this.cacheableMethodNames = null; // null означает "кэшировать все методы"
-            } else {
-                this.cacheableMethodNames = new HashSet<>(Arrays.asList(cacheableMethods));
-            }
+            if (cacheableMethods == null || cacheableMethods.length == 0) this.cacheableMethodNames = null; // null означает "кэшировать все методы"
+             else this.cacheableMethodNames = new HashSet<>(Arrays.asList(cacheableMethods));
         }
 
         @Override
@@ -76,13 +71,13 @@ public class CachingUtils {
 
         private boolean isCacheableMethod(Method method) {
             // Если список кэшируемых методов не задан, кэшируем все методы без параметров
-            if (cacheableMethodNames == null) {return method.getParameterCount() == 0;}
+            if (cacheableMethodNames == null) return method.getParameterCount() == 0;
             // Кэшируем только методы, перечисленные в аннотации
             return cacheableMethodNames.contains(method.getName()) && method.getParameterCount() == 0;
         }
 
+        // Универсальный способ определения состояния объекта
         private Object getState(T obj) {
-            // Универсальный способ определения состояния объекта
             try {
                 List<Object> fieldValues = new ArrayList<>();
                 for (Field field : obj.getClass().getDeclaredFields()) {
